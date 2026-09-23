@@ -3,8 +3,8 @@ mod tests {
     use bevy::math::Vec3;
     use crate::engine::inventory::Inventory;
     use crate::engine::items::{ItemStack, ItemType};
-    use crate::render::hud_ui::preview_boxes::get_steve_preview_boxes;
-    use crate::render::hud_ui::slot_coords::get_slot_pos;
+    use crate::core::ui::get_steve_preview_boxes;
+    use crate::core::ui::get_slot_pos;
     use crate::world::block::BlockType;
 
     #[test]

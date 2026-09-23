@@ -1,4 +1,5 @@
 pub mod app;
+pub mod core;
 pub mod engine;
 pub mod input;
 pub mod network;
