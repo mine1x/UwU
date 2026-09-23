@@ -1,5 +1,5 @@
 use bevy::math::Vec3;
-use super::types::Vertex;
+use crate::render::types::Vertex;
 
 pub fn build_destroy_overlay_mesh(
     bx: i32,

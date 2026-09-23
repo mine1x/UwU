@@ -3,7 +3,7 @@ mod tests {
     use bevy::math::Vec3;
     use crate::engine::items::ItemType;
     use crate::engine::mining::MiningState;
-    use crate::render::destroy_overlay::build_destroy_overlay_mesh;
+    use crate::render::overlays::build_destroy_overlay_mesh;
     use crate::world::block::BlockType;
 
     #[test]

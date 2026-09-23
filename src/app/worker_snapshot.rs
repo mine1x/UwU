@@ -21,6 +21,7 @@ pub fn update_snapshot(
     player.held_item = inventory.hotbar[inventory.selected_slot].as_ref().map(|s| s.item);
     let mut snap = RenderSnapshot::capture(world, player, camera, inventory, items, block_entities, open_container, false);
     snap.hovered_block = hovered;
+    snap.hovered_exposed_faces = super::mining_helper::compute_exposed_faces(world, hovered);
     snap.mouse_ndc = mouse_ndc;
     snap.show_chunk_borders = show_chunk_borders;
     super::mining_helper::populate_snapshot_mining(&mut snap, mining, world);

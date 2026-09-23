@@ -1,5 +1,5 @@
 use wgpu::util::DeviceExt;
-use crate::render::texture_atlas::TextureAtlas;
+use crate::render::atlas::TextureAtlas;
 
 pub fn create_texture_atlas_resources(device: &wgpu::Device, queue: &wgpu::Queue) -> (wgpu::Texture, wgpu::TextureView, wgpu::Sampler, wgpu::BindGroupLayout, wgpu::BindGroup) {
     let atlas_bytes = TextureAtlas::generate_pixel_atlas();

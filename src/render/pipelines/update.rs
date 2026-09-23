@@ -1,7 +1,7 @@
 use bevy::math::{Mat4, Vec3};
 use wgpu::util::DeviceExt;
 use crate::render::hud_ui::update_hud_mesh;
-use crate::render::overlay::build_hover_overlay_mesh;
+use crate::render::overlays::build_hover_overlay_mesh;
 use crate::render::pipeline::Renderer;
 use crate::render::types::CameraUniform;
 use crate::engine::RenderSnapshot;
@@ -59,7 +59,7 @@ pub fn update_renderer_snapshot(
     }
 
     if let Some((bx, by, bz)) = snapshot.hovered_block {
-        let (hv, hi) = build_hover_overlay_mesh(bx, by, bz);
+        let (hv, hi) = build_hover_overlay_mesh(bx, by, bz, snapshot.hovered_exposed_faces, offset);
         let off = ov.len() as u32;
         ov.extend_from_slice(&hv);
         for &idx in &hi { oi.push(off + idx); }
