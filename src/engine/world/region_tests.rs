@@ -60,11 +60,11 @@ mod tests {
     #[test]
     fn test_save_and_load_world_regions() {
         let world = VoxelWorld::new_flat(1);
-        let count = crate::core::world::save_world_to_disk(&world);
+        let count = crate::engine::world::save_world_to_disk(&world);
         assert!(count > 0);
 
         let mut loaded_world = VoxelWorld::new();
-        assert!(crate::core::world::load_world_from_disk(&mut loaded_world));
+        assert!(crate::engine::world::load_world_from_disk(&mut loaded_world));
         assert_eq!(loaded_world.get_block(0, 0, 0), BlockType::Stone);
         assert_eq!(loaded_world.get_block(0, 4, 0), BlockType::Grass);
     }

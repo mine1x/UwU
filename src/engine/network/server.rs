@@ -1,20 +1,18 @@
-use std::net::{TcpListener, TcpStream};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
-use std::thread;
-use std::time::Duration;
 use super::lan_pinger::LanServerPinger;
-use super::packet_frame::write_packet_frame;
 use super::protocol::Packet;
-use super::server_client::handle_client;
+use super::server_client::handle_client_async;
 use crate::world::ConcurrentChunkStorage;
+use tokio::net::TcpListener;
+use tokio::sync::mpsc;
 
 pub struct LanServer {
     pub port: u16,
     running: Arc<AtomicBool>,
     _pinger: LanServerPinger,
     incoming: Arc<Mutex<Vec<Packet>>>,
-    clients: Arc<Mutex<Vec<TcpStream>>>,
+    client_senders: Arc<Mutex<Vec<mpsc::UnboundedSender<Packet>>>>,
     pub modified_blocks: Arc<Mutex<Vec<(i32, i32, i32, u8)>>>,
     pub dropped_items: Arc<Mutex<Vec<(i32, bevy::math::Vec3, u8, u32)>>>,
 }
@@ -25,39 +23,74 @@ impl LanServer {
         port: u16,
         storage: Arc<Mutex<Option<Arc<ConcurrentChunkStorage>>>>,
     ) -> Result<Self, std::io::Error> {
-        let listener = TcpListener::bind(("0.0.0.0", port))
-            .or_else(|_| TcpListener::bind(("0.0.0.0", 0)))?;
-        let _ = listener.set_nonblocking(true);
-        let actual_port = listener.local_addr()?.port();
-        let pinger = LanServerPinger::start(motd, actual_port.to_string());
+        let rt = super::runtime::get_network_runtime();
 
+        let (actual_port, listener) = rt.block_on(async {
+            let res: Result<(u16, TcpListener), std::io::Error> = match TcpListener::bind(("0.0.0.0", port)).await {
+                Ok(l) => {
+                    let p = l.local_addr()?.port();
+                    Ok((p, l))
+                }
+                Err(_) => {
+                    let l = TcpListener::bind(("0.0.0.0", 0)).await?;
+                    let p = l.local_addr()?.port();
+                    Ok((p, l))
+                }
+            };
+            res
+        })?;
+
+        let pinger = LanServerPinger::start(motd, actual_port.to_string());
         let running = Arc::new(AtomicBool::new(true));
         let incoming = Arc::new(Mutex::new(Vec::new()));
-        let clients = Arc::new(Mutex::new(Vec::<TcpStream>::new()));
+        let client_senders = Arc::new(Mutex::new(Vec::<mpsc::UnboundedSender<Packet>>::new()));
         let modified_blocks = Arc::new(Mutex::new(Vec::new()));
         let dropped_items = Arc::new(Mutex::new(Vec::new()));
 
-        let (r_c, in_c, cl_c, mb_c, di_c) = (running.clone(), incoming.clone(), clients.clone(), modified_blocks.clone(), dropped_items.clone());
+        let (r_c, in_c, cl_c, mb_c, di_c) = (
+            running.clone(),
+            incoming.clone(),
+            client_senders.clone(),
+            modified_blocks.clone(),
+            dropped_items.clone(),
+        );
         let storage_c = storage.clone();
 
-        thread::Builder::new().name("LanServerAcceptor".into()).spawn(move || {
+        rt.spawn(async move {
             let mut next_id = 2;
             while r_c.load(Ordering::Relaxed) {
-                if let Ok((stream, _)) = listener.accept() {
-                    let _ = stream.set_nonblocking(false);
-                    let _ = stream.set_read_timeout(Some(Duration::from_millis(150)));
-                    let _ = stream.set_write_timeout(Some(Duration::from_millis(500)));
-                    if let Ok(writer_stream) = stream.try_clone() {
-                        cl_c.lock().unwrap().push(writer_stream);
+                match listener.accept().await {
+                    Ok((stream, _)) => {
+                        let (tx, rx) = mpsc::unbounded_channel::<Packet>();
+                        cl_c.lock().unwrap().push(tx);
+                        handle_client_async(
+                            stream,
+                            next_id,
+                            r_c.clone(),
+                            in_c.clone(),
+                            mb_c.clone(),
+                            di_c.clone(),
+                            storage_c.clone(),
+                            rx,
+                        );
+                        next_id += 1;
                     }
-                    handle_client(stream, next_id, r_c.clone(), in_c.clone(), mb_c.clone(), di_c.clone(), storage_c.clone());
-                    next_id += 1;
+                    Err(_) => {
+                        tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+                    }
                 }
-                thread::sleep(Duration::from_millis(10));
             }
-        }).ok();
+        });
 
-        Ok(Self { port: actual_port, running, _pinger: pinger, incoming, clients, modified_blocks, dropped_items })
+        Ok(Self {
+            port: actual_port,
+            running,
+            _pinger: pinger,
+            incoming,
+            client_senders,
+            modified_blocks,
+            dropped_items,
+        })
     }
 
     pub fn poll_packets(&self) -> Vec<Packet> {
@@ -86,9 +119,8 @@ impl LanServer {
     }
 
     pub fn broadcast(&self, packet: &Packet) {
-        let (pid, pld) = packet.encode();
-        let mut list = self.clients.lock().unwrap();
-        list.retain_mut(|stream| write_packet_frame(stream, pid, &pld).is_ok());
+        let mut list = self.client_senders.lock().unwrap();
+        list.retain(|tx| tx.send(packet.clone()).is_ok());
     }
 }
 

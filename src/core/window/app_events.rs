@@ -54,10 +54,10 @@ impl ApplicationHandler for App {
                 }
             }
             WindowEvent::MouseInput { state: m_state, button, .. } => {
-                super::mouse_input_handler::handle_mouse_input(self, m_state, button, event_loop);
+                crate::core::input::handle_mouse_input(self, m_state, button, event_loop);
             }
             WindowEvent::KeyboardInput { event: KeyEvent { physical_key: PhysicalKey::Code(key), state: k_state, .. }, .. } => {
-                super::key_events::handle_keyboard_input(self, key, k_state == ElementState::Pressed, event_loop);
+                crate::core::input::handle_keyboard_input(self, key, k_state == ElementState::Pressed, event_loop);
             }
             WindowEvent::RedrawRequested => {
                 let now = Instant::now();

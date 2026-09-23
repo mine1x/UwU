@@ -1,11 +1,10 @@
-pub mod app;
 pub mod core;
 pub mod engine;
-pub mod input;
-pub mod network;
-pub mod render;
-pub mod world;
 
+pub use engine::input;
+pub use engine::network;
+pub use engine::render;
+pub use engine::world;
 
 fn main() {
     env_logger::init();
@@ -29,5 +28,5 @@ fn main() {
     println!("  * ESC              : Thoát game");
     println!("============================================================");
 
-    app::run_bevy_engine();
+    core::session::run_bevy_engine();
 }

@@ -66,7 +66,7 @@ pub fn handle_worker_command(
             );
         }
         LogicCommand::MouseAction { button, is_pressed, aspect, mouse_pos, screen_size, is_shift } => {
-            super::mouse_actions::handle_mouse_action(
+            crate::core::input::handle_mouse_action(
                 button, is_pressed, aspect, mouse_pos, screen_size, is_shift,
                 inventory, mining_state, world, camera, player, tick_system, block_tx,
                 block_entities, open_container,

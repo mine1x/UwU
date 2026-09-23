@@ -8,8 +8,8 @@ pub struct WaterAnimator {
 impl WaterAnimator {
     pub fn new() -> Self {
         let water_tint = [0.247f32, 0.463f32, 0.894f32];
-        let w_still = include_bytes!("../../assets/textures/block/water_still.png");
-        let w_flow = include_bytes!("../../assets/textures/block/water_flow.png");
+        let w_still = include_bytes!("../../../assets/textures/block/water_still.png");
+        let w_flow = include_bytes!("../../../assets/textures/block/water_flow.png");
 
         let still_frames = Self::load_frames(w_still, 16, 16, water_tint);
         let flow_frames = Self::load_frames(w_flow, 32, 32, water_tint);

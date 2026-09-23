@@ -35,7 +35,7 @@ pub fn build_pipelines(
     });
 
     let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-        label: Some("Shader"), source: wgpu::ShaderSource::Wgsl(include_str!("../../shader.wgsl").into()),
+        label: Some("Shader"), source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
     });
     let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: Some("PL"), bind_group_layouts: &[&cam_bgl, &shadow_bgl, texture_bgl], push_constant_ranges: &[],

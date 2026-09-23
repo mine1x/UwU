@@ -1,9 +1,9 @@
-use std::net::{Ipv4Addr, UdpSocket};
+use std::net::Ipv4Addr;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
-use std::thread;
 use std::time::{Duration, Instant};
 use super::lan_discovery::{parse_address, parse_motd, DiscoveredServer};
+use tokio::net::UdpSocket;
 
 pub struct LanServerDetector {
     servers: Arc<Mutex<Vec<DiscoveredServer>>>,
@@ -20,55 +20,67 @@ impl LanServerDetector {
         let servers_clone = servers.clone();
         let running_clone = running.clone();
 
-        thread::Builder::new()
-            .name("LanServerDetector".into())
-            .spawn(move || {
-                let maybe_socket = UdpSocket::bind(("0.0.0.0", Self::PORT)).ok().map(|s| {
-                    let _ = s.join_multicast_v4(&Self::MULTICAST_IP, &Ipv4Addr::UNSPECIFIED);
-                    let _ = s.set_read_timeout(Some(Duration::from_millis(300)));
-                    s
-                });
+        let rt = super::runtime::get_network_runtime();
+        rt.spawn(async move {
+            let socket = match UdpSocket::bind(("0.0.0.0", Self::PORT)).await {
+                Ok(s) => {
+                    let _ = s.join_multicast_v4(Self::MULTICAST_IP, Ipv4Addr::UNSPECIFIED);
+                    Some(s)
+                }
+                Err(_) => None,
+            };
 
-                let mut buf = [0u8; 1024];
-                while running_clone.load(Ordering::Relaxed) {
-                    if let Some(ref socket) = maybe_socket {
-                        if let Ok((len, src)) = socket.recv_from(&mut buf) {
-                            if let Ok(text) = std::str::from_utf8(&buf[..len]) {
-                                let motd = parse_motd(text);
-                                if let Some(port_str) = parse_address(text) {
-                                    let addr = format!("{}:{}", src.ip(), port_str);
-                                    let mut list = servers_clone.lock().unwrap();
-                                    if let Some(srv) = list.iter_mut().find(|s| s.address == addr) {
-                                        srv.last_seen = Instant::now();
-                                    } else {
-                                        list.push(DiscoveredServer::new(motd, addr));
+            let mut buf = [0u8; 1024];
+            while running_clone.load(Ordering::Relaxed) {
+                if let Some(ref s) = socket {
+                    tokio::select! {
+                        res = s.recv_from(&mut buf) => {
+                            if let Ok((len, src)) = res {
+                                if let Ok(text) = std::str::from_utf8(&buf[..len]) {
+                                    let motd = parse_motd(text);
+                                    if let Some(port_str) = parse_address(text) {
+                                        let addr = format!("{}:{}", src.ip(), port_str);
+                                        let mut list = servers_clone.lock().unwrap();
+                                        if let Some(srv) = list.iter_mut().find(|s| s.address == addr) {
+                                            srv.last_seen = Instant::now();
+                                        } else {
+                                            list.push(DiscoveredServer::new(motd, addr));
+                                        }
                                     }
                                 }
                             }
                         }
-                    } else {
-                        thread::sleep(Duration::from_millis(300));
+                        _ = tokio::time::sleep(Duration::from_millis(300)) => {}
                     }
-                    for local_srv in super::local_ipc::poll_local_hosts() {
-                        let mut list = servers_clone.lock().unwrap();
-                        if let Some(srv) = list.iter_mut().find(|s| s.address == local_srv.address) {
-                            srv.last_seen = Instant::now();
-                        } else {
-                            list.push(local_srv);
-                        }
-                    }
-                    let now = Instant::now();
-                    let mut list = servers_clone.lock().unwrap();
-                    list.retain(|s| now.duration_since(s.last_seen).as_secs() < 5);
+                } else {
+                    tokio::time::sleep(Duration::from_millis(300)).await;
                 }
-            })
-            .ok();
+
+                for local_srv in super::local_ipc::poll_local_hosts() {
+                    let mut list = servers_clone.lock().unwrap();
+                    if let Some(srv) = list.iter_mut().find(|s| s.address == local_srv.address) {
+                        srv.last_seen = Instant::now();
+                    } else {
+                        list.push(local_srv);
+                    }
+                }
+
+                let now = Instant::now();
+                servers_clone
+                    .lock()
+                    .unwrap()
+                    .retain(|s| now.duration_since(s.last_seen).as_secs() < 16);
+            }
+        });
 
         Self { servers, running }
     }
 
     pub fn get_servers(&self) -> Vec<DiscoveredServer> {
-        self.servers.lock().unwrap().clone()
+        let now = Instant::now();
+        let mut list = self.servers.lock().unwrap();
+        list.retain(|s| now.duration_since(s.last_seen).as_secs() < 16);
+        list.clone()
     }
 }
 

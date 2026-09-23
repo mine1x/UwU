@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use winit::event_loop::{ControlFlow, EventLoop};
-use crate::app::App as GameApp;
+use crate::core::window::App as GameApp;
 
 pub struct WgpuRunnerPlugin;
 

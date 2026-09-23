@@ -27,6 +27,13 @@ pub mod chunk_save;
 pub mod voxel;
 pub mod water_flow_dir;
 pub mod water_slope;
+pub mod persistence;
+pub mod autosave;
+
+pub use autosave::WorldAutosaver;
+pub use persistence::{
+    get_world_save_dir, load_world_from_disk, save_dirty_chunks_to_disk, save_world_to_disk,
+};
 
 pub use block::BlockType;
 pub use block_conv::{block_from_u8, block_to_u8};

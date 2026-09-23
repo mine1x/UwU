@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::app::game_state::GameState;
+    use crate::core::session::GameState;
     use crate::core::menu::{handle_menu_click, MenuAction};
     use crate::network::DiscoveredServer;
 

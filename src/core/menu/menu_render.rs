@@ -3,7 +3,7 @@ use super::lan_screen::draw_lan_screen;
 use super::pause_screen::draw_pause_screen;
 use super::title_screen::draw_title_screen;
 use super::direct_connect_screen::draw_direct_connect_screen;
-use crate::app::game_state::GameState;
+use crate::core::session::GameState;
 use crate::network::DiscoveredServer;
 use crate::render::hud_ui::renderer::HudRenderer;
 

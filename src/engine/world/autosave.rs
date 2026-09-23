@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 use crate::world::concurrent_storage::ConcurrentChunkStorage;
-use super::world_persistence::save_dirty_chunks_to_disk;
+use super::persistence::save_dirty_chunks_to_disk;
 
 pub const AUTOSAVE_INTERVAL: Duration = Duration::from_secs(300); // 5 minutes
 

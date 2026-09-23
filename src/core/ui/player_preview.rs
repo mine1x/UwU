@@ -1,5 +1,6 @@
 use bevy::math::Vec3;
-use super::preview_boxes::get_steve_preview_boxes;
+use crate::engine::player_ctrl::mesh::build_player_mesh;
+use crate::engine::player_ctrl::Player;
 use crate::render::hud_ui::renderer::HudVertex;
 
 pub fn draw_player_in_inventory(
@@ -11,62 +12,100 @@ pub fn draw_player_in_inventory(
     aspect: f32,
     s: f32,
 ) {
+    // 1. Tính góc nhìn theo con trỏ chuột:
+    // Tâm khung đen preview trong GUI space: x = 51.0, y = 43.0
     let mg_x = (mouse_ndc.0 - win_x) * aspect / s;
     let mg_y = 166.0 - (mouse_ndc.1 - win_y) / s;
-    let (dx, dy) = (50.5 - mg_x, 43.0 - mg_y);
+    let (dx, dy) = (51.0 - mg_x, 43.0 - mg_y);
     let (x_angle, y_angle) = ((dx / 40.0).atan(), (dy / 40.0).atan());
-    let (byaw, hyaw) = (x_angle * 20.0f32.to_radians(), x_angle * 40.0f32.to_radians());
-    let hpitch = (-y_angle * 20.0f32.to_radians()).clamp(-0.7, 0.7);
 
-    let (cby, sby) = (byaw.cos(), byaw.sin());
-    let (chy, shy) = (hyaw.cos(), hyaw.sin());
-    let (chp, shp) = (hpitch.cos(), hpitch.sin());
+    // Trong engine gốc: Mặt trước (+Z) nhìn thẳng ra màn hình khi yaw = 0.
+    // Nghiêng nhẹ ~-15 độ để nhìn rõ cả mặt trước lẫn một bên thân,
+    // và xoay theo vị trí chuột.
+    let base_yaw = -15.0f32.to_radians();
+    let byaw = base_yaw - x_angle * 25.0f32.to_radians();
+    let hyaw = base_yaw - x_angle * 45.0f32.to_radians();
+    let hpitch = (-y_angle * 25.0f32.to_radians()).clamp(-0.7, 0.7);
 
-    let rot_b = |p: Vec3| Vec3::new(p.x * cby + p.z * sby, p.y, -p.x * sby + p.z * cby);
-    let rot_h = |p: Vec3| {
-        let y = Vec3::new(p.x * chy + p.z * shy, p.y, -p.x * shy + p.z * chy);
-        Vec3::new(y.x, y.y * chp - y.z * shp, y.y * shp + y.z * chp)
-    };
+    // 2. Tạo player ảo để gọi trực tiếp logic build_player_mesh của engine
+    let mut preview_player = Player::new(0.0, 0.0, 0.0);
+    preview_player.yaw = byaw;
+    preview_player.head_yaw = hyaw;
+    preview_player.head_pitch = hpitch;
 
-    let feet_x = win_x + 50.5 * s / aspect;
-    let feet_y = win_y + 91.0 * s;
-    let ms = 1.6875 * s;
+    let (player_verts, player_indices) = build_player_mesh(&preview_player);
 
-    for (b_i, b) in get_steve_preview_boxes().iter().enumerate() {
-        let is_head = b_i == 5;
-        let (hx, hy, hz) = (b.size.x * 0.5, b.size.y * 0.5, b.size.z * 0.5);
-        let faces: [(Vec3, [Vec3; 4], f32, usize); 6] = [
-            (Vec3::Y, [Vec3::new(-hx, hy, -hz), Vec3::new(hx, hy, -hz), Vec3::new(hx, hy, hz), Vec3::new(-hx, hy, hz)], 1.0, 0),
-            (-Vec3::Y, [Vec3::new(-hx, -hy, hz), Vec3::new(hx, -hy, hz), Vec3::new(hx, -hy, -hz), Vec3::new(-hx, -hy, -hz)], 0.6, 1),
-            (Vec3::Z, [Vec3::new(-hx, hy, hz), Vec3::new(hx, hy, hz), Vec3::new(hx, -hy, hz), Vec3::new(-hx, -hy, hz)], 0.9, 2),
-            (-Vec3::Z, [Vec3::new(hx, hy, -hz), Vec3::new(-hx, hy, -hz), Vec3::new(-hx, -hy, -hz), Vec3::new(hx, -hy, -hz)], 0.7, 3),
-            (Vec3::X, [Vec3::new(hx, hy, hz), Vec3::new(hx, hy, -hz), Vec3::new(hx, -hy, -hz), Vec3::new(hx, -hy, hz)], 0.8, 4),
-            (-Vec3::X, [Vec3::new(-hx, hy, -hz), Vec3::new(-hx, hy, hz), Vec3::new(-hx, -hy, hz), Vec3::new(-hx, -hy, -hz)], 0.8, 5),
-        ];
+    // Chân của Steve đặt ở đáy ô preview (y=75 trong GUI space)
+    let feet_x = win_x + 51.0 * s / aspect;
+    let feet_y = win_y + (166.0 - 75.0) * s;
+    let scale_factor = 28.0 * s;
 
-        for (norm, corners, light, f_idx) in faces {
-            let r_norm = if is_head { rot_h(norm) } else { rot_b(norm) };
-            if r_norm.z <= 0.001 { continue; }
+    let light_dir = Vec3::new(0.5, 1.2, 0.8).normalize();
+    let skin_u_offset = 512.0 / 1024.0;
+    let skin_scale = 64.0 / 1024.0;
 
-            let uv = b.uvs[0][f_idx];
-            let (u0, v0) = ((512.0 + uv[0] * 64.0) / 1024.0, (uv[1] * 64.0) / 1024.0);
-            let (u1, v1) = ((512.0 + uv[2] * 64.0) / 1024.0, (uv[3] * 64.0) / 1024.0);
-            let uvs = [[u0, v0], [u1, v0], [u1, v1], [u0, v1]];
-            let color = [light, light, light, 1.0];
-            let base = v.len() as u32;
+    // 3. Gom và sắp xếp các tam giác theo độ sâu Z (Painter's algorithm)
+    // Người xem nhìn từ +Z nhìn về -Z. Mặt trước có Z lớn hơn (ở gần người xem hơn).
+    // Nên tam giác có Z nhỏ hơn (ở xa) cần được vẽ trước, Z lớn hơn vẽ sau.
+    struct Triangle {
+        depth: f32,
+        verts: [HudVertex; 3],
+    }
 
-            for (i, p) in corners.iter().enumerate() {
-                let wp = if is_head {
-                    rot_h(b.origin + *p - Vec3::new(0.0, 24.0, 0.0)) + Vec3::new(0.0, 24.0, 0.0)
-                } else {
-                    rot_b(b.origin + *p)
-                };
-                let sx = feet_x + wp.x * ms / aspect;
-                let sy = feet_y - wp.y * ms;
-                v.push(HudVertex { position: [sx, sy], uv: uvs[i], color });
-            }
+    let mut triangles = Vec::with_capacity(player_indices.len() / 3);
 
-            idx.extend_from_slice(&[base, base + 1, base + 2, base, base + 2, base + 3]);
+    for chunk in player_indices.chunks_exact(3) {
+        let v0 = &player_verts[chunk[0] as usize];
+        let v1 = &player_verts[chunk[1] as usize];
+        let v2 = &player_verts[chunk[2] as usize];
+
+        let p0 = Vec3::from_array(v0.position);
+        let p1 = Vec3::from_array(v1.position);
+        let p2 = Vec3::from_array(v2.position);
+
+        let edge1 = p1 - p0;
+        let edge2 = p2 - p0;
+        let face_norm = edge1.cross(edge2).normalize_or_zero();
+
+        // Mặt quay về phía người xem phải có thành phần pháp tuyến Z > 0.
+        // Cắt bỏ (back-face culling) các mặt quay ra sau lưng (normal.z <= 0).
+        if face_norm.z <= 0.001 {
+            continue;
         }
+
+        let diff = face_norm.dot(light_dir).max(0.0);
+        let light = 0.4 + diff * 0.6;
+        let color = [light, light, light, 1.0];
+
+        let avg_z = (p0.z + p1.z + p2.z) / 3.0;
+
+        let hud_verts = [v0, v1, v2].map(|orig_v| {
+            let wp = Vec3::from_array(orig_v.position);
+            let sx = feet_x + wp.x * scale_factor / aspect;
+            let sy = feet_y + wp.y * scale_factor;
+            let uv = [
+                skin_u_offset + orig_v.uv[0] * skin_scale,
+                orig_v.uv[1] * skin_scale,
+            ];
+            HudVertex {
+                position: [sx, sy],
+                uv,
+                color,
+            }
+        });
+
+        triangles.push(Triangle {
+            depth: avg_z,
+            verts: hud_verts,
+        });
+    }
+
+    // Sắp xếp vẽ từ xa (Z nhỏ) đến gần (Z lớn)
+    triangles.sort_unstable_by(|a, b| a.depth.partial_cmp(&b.depth).unwrap_or(std::cmp::Ordering::Equal));
+
+    for tri in triangles {
+        let base = v.len() as u32;
+        v.extend_from_slice(&tri.verts);
+        idx.extend_from_slice(&[base, base + 1, base + 2]);
     }
 }

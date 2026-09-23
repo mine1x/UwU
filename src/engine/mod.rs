@@ -10,6 +10,10 @@ pub mod crafting;
 pub mod creative_palette;
 pub mod debug;
 pub mod ecs;
+pub mod input;
+pub mod network;
+pub mod render;
+pub mod world;
 #[cfg(test)]
 pub mod gameplay_tests;
 #[cfg(test)]

@@ -4,7 +4,7 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use bevy::math::Vec3;
-use crate::core::world::{load_world_from_disk, save_world_to_disk, WorldAutosaver};
+use crate::engine::world::{load_world_from_disk, save_world_to_disk, WorldAutosaver};
 use crate::engine::RenderSnapshot;
 use crate::input::LogicCommand;
 use crate::world::VoxelWorld;

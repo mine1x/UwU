@@ -7,8 +7,8 @@ pub struct ColorMap {
 
 impl ColorMap {
     pub fn new() -> Self {
-        let grass_bytes = include_bytes!("../../assets/textures/colormap/grass.png");
-        let foliage_bytes = include_bytes!("../../assets/textures/colormap/foliage.png");
+        let grass_bytes = include_bytes!("../../../assets/textures/colormap/grass.png");
+        let foliage_bytes = include_bytes!("../../../assets/textures/colormap/foliage.png");
 
         let grass_pixels = Self::load_colormap(grass_bytes, 0x79C05A);
         let foliage_pixels = Self::load_colormap(foliage_bytes, 0x59C93C);

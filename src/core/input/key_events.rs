@@ -1,6 +1,7 @@
 use winit::event_loop::ActiveEventLoop;
 use winit::keyboard::KeyCode;
-use super::app_state::App;
+use crate::core::session::GameState;
+use crate::core::window::App;
 use crate::input::LogicCommand;
 
 pub fn handle_keyboard_input(app: &mut App, key: KeyCode, pressed: bool, event_loop: &ActiveEventLoop) {
@@ -9,14 +10,14 @@ pub fn handle_keyboard_input(app: &mut App, key: KeyCode, pressed: bool, event_l
     let shift_down = app.keys_pressed.get(&KeyCode::ShiftLeft).copied().unwrap_or(false)
         || app.keys_pressed.get(&KeyCode::ShiftRight).copied().unwrap_or(false);
 
-    if app.game_state == super::game_state::GameState::DirectConnect {
+    if app.game_state == GameState::DirectConnect {
         if key == KeyCode::Enter || key == KeyCode::NumpadEnter {
             let addr = app.direct_ip_input.clone();
             super::menu_action_handler::apply_menu_action(app, crate::core::menu::MenuAction::ConnectLan(addr), event_loop);
             return;
         }
         if key == KeyCode::Escape {
-            app.game_state = super::game_state::GameState::LanLobby;
+            app.game_state = GameState::LanLobby;
             return;
         }
         if super::text_input::handle_text_input(app, key, shift_down) {
@@ -56,25 +57,25 @@ pub fn handle_keyboard_input(app: &mut App, key: KeyCode, pressed: bool, event_l
             KeyCode::KeyX => { let _ = tx.send(LogicCommand::NextSlot); }
             KeyCode::Escape => {
                 match app.game_state {
-                    super::game_state::GameState::TitleScreen => {
+                    GameState::TitleScreen => {
                         app.running.store(false, std::sync::atomic::Ordering::Relaxed);
                         event_loop.exit();
                     }
-                    super::game_state::GameState::LanLobby => {
-                        app.game_state = super::game_state::GameState::TitleScreen;
+                    GameState::LanLobby => {
+                        app.game_state = GameState::TitleScreen;
                     }
-                    super::game_state::GameState::DirectConnect => {
-                        app.game_state = super::game_state::GameState::LanLobby;
+                    GameState::DirectConnect => {
+                        app.game_state = GameState::LanLobby;
                     }
-                    super::game_state::GameState::Playing => {
+                    GameState::Playing => {
                         if app.inventory_open {
                             let _ = tx.send(LogicCommand::CloseInventory);
                         } else {
-                            app.game_state = super::game_state::GameState::Paused;
+                            app.game_state = GameState::Paused;
                         }
                     }
-                    super::game_state::GameState::Paused => {
-                        app.game_state = super::game_state::GameState::Playing;
+                    GameState::Paused => {
+                        app.game_state = GameState::Playing;
                     }
                 }
             }

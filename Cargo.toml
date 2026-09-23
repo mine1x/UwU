@@ -14,3 +14,4 @@ pathfinding = "4.14"
 image = { version = "0.25", default-features = false, features = ["png"] }
 bevy = { version = "0.19.1", default-features = false }
 block-mesh = "0.2.0"
+tokio = { version = "1.43", features = ["rt-multi-thread", "net", "sync", "time", "io-util", "macros"] }

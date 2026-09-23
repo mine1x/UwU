@@ -92,9 +92,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         alpha = 0.75;
     }
     let lit = tex_color.rgb * (ambient + direct);
-    let fogf = clamp((distance(in.world_pos, uniforms.camera_pos.xyz) - uniforms.fog.x) / max(uniforms.fog.y - uniforms.fog.x, 1e-4), 0.0, 1.0);
-    let fog_color = vec3<f32>(0.1, 0.12, 0.16);
-    return vec4<f32>(mix(lit, fog_color, fogf), alpha);
+    return vec4<f32>(lit, alpha);
 }
 
 @vertex

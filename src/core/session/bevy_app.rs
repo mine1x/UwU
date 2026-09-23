@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use super::plugins::*;
+use crate::engine::ecs::plugins::*;
 
 pub fn build_game_app() -> App {
     let mut app = App::new();

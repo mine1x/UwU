@@ -1,4 +1,4 @@
-use crate::app::game_state::GameState;
+use crate::core::session::GameState;
 use crate::network::DiscoveredServer;
 use super::lan_screen::get_lan_static_buttons;
 use super::menu_button::MenuButton;

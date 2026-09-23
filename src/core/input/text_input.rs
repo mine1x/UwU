@@ -1,6 +1,6 @@
 use winit::keyboard::KeyCode;
-use super::app_state::App;
-use super::game_state::GameState;
+use crate::core::session::GameState;
+use crate::core::window::App;
 
 pub fn handle_text_input(app: &mut App, key: KeyCode, shift: bool) -> bool {
     if app.game_state != GameState::DirectConnect {

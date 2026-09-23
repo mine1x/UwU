@@ -1,7 +1,7 @@
 use std::sync::atomic::Ordering;
 use winit::event_loop::ActiveEventLoop;
-use super::app_state::App;
-use super::game_state::GameState;
+use crate::core::session::GameState;
+use crate::core::window::App;
 use crate::core::menu::MenuAction;
 use crate::network::{LanClient, LanServer, LanServerDetector};
 

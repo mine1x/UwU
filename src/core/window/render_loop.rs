@@ -1,13 +1,31 @@
 use winit::event_loop::ActiveEventLoop;
 use super::app_state::App;
-use super::game_state::GameState;
+use crate::core::session::GameState;
 
 pub fn render_frame(app: &mut App, event_loop: &ActiveEventLoop, dt: f32) {
     if app.game_state == GameState::Playing {
         super::render_movement::send_movement_inputs(app);
     }
     if app.game_state == GameState::Playing || app.game_state == GameState::Paused {
-        super::lan_sync::update_lan_network(app);
+        let mut new_id = None;
+        {
+            let mut set_id = |id: u64| {
+                new_id = Some(id);
+            };
+            crate::engine::network::sync_lan_network(
+                app.local_player_id,
+                &app.latest_snapshot,
+                app.block_event_rx.as_ref(),
+                app.lan_server.as_ref(),
+                app.lan_client.as_ref(),
+                &mut app.remote_players,
+                app.command_tx.as_ref(),
+                &mut set_id,
+            );
+        }
+        if let Some(id) = new_id {
+            app.local_player_id = id;
+        }
     }
 
     let is_in_world = app.game_state == GameState::Playing || app.game_state == GameState::Paused;

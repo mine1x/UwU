@@ -5,7 +5,7 @@ use winit::event_loop::ActiveEventLoop;
 use winit::window::Window;
 
 use super::app_state::App;
-use super::logic_worker::LogicWorker;
+use crate::core::session::LogicWorker;
 use crate::input::LogicCommand;
 use crate::render::Renderer;
 

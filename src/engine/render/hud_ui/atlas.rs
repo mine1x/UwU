@@ -59,17 +59,17 @@ impl HudAtlas {
 
     pub fn generate_atlas_pixels() -> Vec<u8> {
         let mut p = vec![0u8; (Self::WIDTH * Self::HEIGHT * 4) as usize];
-        Self::blit(&mut p, include_bytes!("../../../assets/textures/hotbar.png"), 0, 0);
-        Self::blit(&mut p, include_bytes!("../../../assets/textures/hotbar_selection.png"), 0, 24);
-        Self::blit(&mut p, include_bytes!("../../../assets/textures/heart_bg.png"), 30, 24);
-        Self::blit(&mut p, include_bytes!("../../../assets/textures/heart_full.png"), 40, 24);
-        Self::blit(&mut p, include_bytes!("../../../assets/textures/heart_half.png"), 50, 24);
-        Self::blit(&mut p, include_bytes!("../../../assets/textures/food_bg.png"), 60, 24);
-        Self::blit(&mut p, include_bytes!("../../../assets/textures/food_full.png"), 70, 24);
-        Self::blit(&mut p, include_bytes!("../../../assets/textures/crosshair.png"), 80, 24);
-        Self::blit(&mut p, include_bytes!("../../../assets/textures/xp_bg.png"), 0, 50);
-        Self::blit(&mut p, include_bytes!("../../../assets/textures/xp_fg.png"), 0, 56);
-        Self::blit(&mut p, include_bytes!("../../../assets/textures/font/ascii.png"), 0, 64);
+        Self::blit(&mut p, include_bytes!("../../../../assets/textures/hotbar.png"), 0, 0);
+        Self::blit(&mut p, include_bytes!("../../../../assets/textures/hotbar_selection.png"), 0, 24);
+        Self::blit(&mut p, include_bytes!("../../../../assets/textures/heart_bg.png"), 30, 24);
+        Self::blit(&mut p, include_bytes!("../../../../assets/textures/heart_full.png"), 40, 24);
+        Self::blit(&mut p, include_bytes!("../../../../assets/textures/heart_half.png"), 50, 24);
+        Self::blit(&mut p, include_bytes!("../../../../assets/textures/food_bg.png"), 60, 24);
+        Self::blit(&mut p, include_bytes!("../../../../assets/textures/food_full.png"), 70, 24);
+        Self::blit(&mut p, include_bytes!("../../../../assets/textures/crosshair.png"), 80, 24);
+        Self::blit(&mut p, include_bytes!("../../../../assets/textures/xp_bg.png"), 0, 50);
+        Self::blit(&mut p, include_bytes!("../../../../assets/textures/xp_fg.png"), 0, 56);
+        Self::blit(&mut p, include_bytes!("../../../../assets/textures/font/ascii.png"), 0, 64);
         super::atlas_items::blit_items_and_player(&mut p);
         super::atlas_more_items::blit_survival_and_food_items(&mut p);
         super::atlas_tools::blit_all_tool_sprites(&mut p);

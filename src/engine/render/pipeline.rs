@@ -79,7 +79,7 @@ impl Renderer {
 
     pub fn update_menu(
         &mut self,
-        state: crate::app::game_state::GameState,
+        state: crate::core::session::GameState,
         servers: &[crate::network::DiscoveredServer],
         ip_input: &str,
         mouse_ndc: (f32, f32),
