@@ -61,6 +61,9 @@ pub fn handle_keyboard_input(app: &mut App, key: KeyCode, pressed: bool, event_l
                         app.running.store(false, std::sync::atomic::Ordering::Relaxed);
                         event_loop.exit();
                     }
+                    GameState::CreateWorld => {
+                        app.game_state = GameState::TitleScreen;
+                    }
                     GameState::LanLobby => {
                         app.game_state = GameState::TitleScreen;
                     }

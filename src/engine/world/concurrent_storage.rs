@@ -44,6 +44,18 @@ impl ConcurrentChunkStorage {
         shard.insert(coords, chunk);
     }
 
+    pub fn contains_chunk(&self, coords: &(i32, i32, i32)) -> bool {
+        let shard = self.shards[Self::shard_idx(coords)].read().unwrap();
+        shard.contains_key(coords)
+    }
+
+    pub fn clear(&self) {
+        for shard in &self.shards {
+            let mut s = shard.write().unwrap();
+            s.clear();
+        }
+    }
+
     pub fn get_all_keys(&self) -> Vec<(i32, i32, i32)> {
         let mut keys = Vec::new();
         for shard in &self.shards {

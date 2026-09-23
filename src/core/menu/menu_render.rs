@@ -13,6 +13,10 @@ pub fn update_menu_hud_mesh(
     state: GameState,
     servers: &[DiscoveredServer],
     ip_input: &str,
+    world_name: &str,
+    world_seed: &str,
+    game_mode: crate::engine::GameMode,
+    active_field: usize,
     mouse_ndc: (f32, f32),
     aspect: f32,
 ) {
@@ -22,6 +26,11 @@ pub fn update_menu_hud_mesh(
     match state {
         GameState::TitleScreen => {
             draw_title_screen(&mut v, &mut i, mouse_ndc, aspect);
+        }
+        GameState::CreateWorld => {
+            super::create_world_screen::draw_create_world_screen(
+                &mut v, &mut i, world_name, world_seed, game_mode, active_field, mouse_ndc, aspect,
+            );
         }
         GameState::LanLobby => {
             draw_lan_screen(&mut v, &mut i, servers, mouse_ndc, aspect);

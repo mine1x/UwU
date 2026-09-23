@@ -7,6 +7,10 @@ use super::title_screen::get_title_buttons;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum MenuAction {
+    OpenCreateWorld,
+    ToggleCreateGameMode,
+    SelectInputField(usize),
+    CreateNewWorld,
     StartSingleplayer,
     OpenLanLobby,
     OpenDirectConnect,
@@ -23,15 +27,44 @@ pub fn handle_menu_click(
     aspect: f32,
     servers: &[DiscoveredServer],
     direct_ip: &str,
+    game_mode_name: &str,
 ) -> Option<MenuAction> {
     match state {
         GameState::TitleScreen => {
             for btn in get_title_buttons(aspect) {
                 if btn.is_hovered(mouse) {
                     return match btn.id {
-                        1 => Some(MenuAction::StartSingleplayer),
+                        1 => Some(MenuAction::OpenCreateWorld),
                         2 => Some(MenuAction::OpenLanLobby),
                         3 => Some(MenuAction::QuitGame),
+                        _ => None,
+                    };
+                }
+            }
+        }
+        GameState::CreateWorld => {
+            // Check text box clicks
+            let box_w = 0.52 / aspect;
+            let box_h = 0.070;
+            let box_x = -box_w * 0.5;
+            let (mx, my) = mouse;
+
+            let y1 = 0.54;
+            if mx >= box_x && mx <= box_x + box_w && my >= y1 && my <= y1 + box_h {
+                return Some(MenuAction::SelectInputField(0));
+            }
+
+            let y2 = 0.28;
+            if mx >= box_x && mx <= box_x + box_w && my >= y2 && my <= y2 + box_h {
+                return Some(MenuAction::SelectInputField(1));
+            }
+
+            for btn in super::create_world_screen::get_create_world_buttons(aspect, game_mode_name == "Creative") {
+                if btn.is_hovered(mouse) {
+                    return match btn.id {
+                        40 => Some(MenuAction::ToggleCreateGameMode),
+                        41 => Some(MenuAction::CreateNewWorld),
+                        42 => Some(MenuAction::QuitToTitle),
                         _ => None,
                     };
                 }

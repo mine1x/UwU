@@ -59,11 +59,19 @@ pub fn render_frame(app: &mut App, event_loop: &ActiveEventLoop, dt: f32) {
                     app.inventory_open = snapshot.inventory_open;
                     r.update_from_snapshot(&snapshot, &app.remote_players, dt);
                 }
-                r.update_menu(app.game_state, &[], &app.direct_ip_input, m_ndc);
+                r.update_menu(
+                    app.game_state, &[], &app.direct_ip_input,
+                    &app.world_name_input, &app.world_seed_input, app.create_world_gamemode, app.active_create_field,
+                    m_ndc,
+                );
             }
-            GameState::TitleScreen | GameState::LanLobby | GameState::DirectConnect => {
+            GameState::TitleScreen | GameState::CreateWorld | GameState::LanLobby | GameState::DirectConnect => {
                 let servers = app.lan_detector.as_ref().map(|d| d.get_servers()).unwrap_or_default();
-                r.update_menu(app.game_state, &servers, &app.direct_ip_input, m_ndc);
+                r.update_menu(
+                    app.game_state, &servers, &app.direct_ip_input,
+                    &app.world_name_input, &app.world_seed_input, app.create_world_gamemode, app.active_create_field,
+                    m_ndc,
+                );
             }
         }
         match r.render() {

@@ -3,6 +3,43 @@ use crate::core::session::GameState;
 use crate::core::window::App;
 
 pub fn handle_text_input(app: &mut App, key: KeyCode, shift: bool) -> bool {
+    if app.game_state == GameState::CreateWorld {
+        let target = if app.active_create_field == 0 {
+            &mut app.world_name_input
+        } else {
+            &mut app.world_seed_input
+        };
+
+        match key {
+            KeyCode::Backspace => {
+                target.pop();
+                return true;
+            }
+            KeyCode::Space => {
+                if target.len() < 32 { target.push(' '); }
+                return true;
+            }
+            KeyCode::Minus => {
+                if target.len() < 32 { target.push('-'); }
+                return true;
+            }
+            KeyCode::Tab => {
+                app.active_create_field = 1 - app.active_create_field;
+                return true;
+            }
+            _ => {
+                if let Some(c) = key_to_char(key) {
+                    if target.len() < 32 {
+                        let ch = if shift { c.to_ascii_uppercase() } else { c };
+                        target.push(ch);
+                    }
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     if app.game_state != GameState::DirectConnect {
         return false;
     }

@@ -1,3 +1,4 @@
+pub mod create_world_screen;
 pub mod direct_connect_screen;
 pub mod lan_screen;
 pub mod menu_bg;
@@ -10,6 +11,7 @@ pub mod title_screen;
 #[cfg(test)]
 pub mod menu_tests;
 
+pub use create_world_screen::{draw_create_world_screen, get_create_world_buttons};
 pub use direct_connect_screen::{draw_direct_connect_screen, get_direct_connect_buttons};
 pub use lan_screen::{draw_lan_screen, get_lan_static_buttons};
 pub use menu_bg::{draw_dark_overlay, draw_tiled_menu_background};

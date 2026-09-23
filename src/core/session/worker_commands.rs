@@ -25,6 +25,8 @@ pub fn handle_worker_command(
     show_chunk_borders: &mut bool,
     piechart_state: &mut crate::engine::ProfilerPieChartState,
     profiler: &crate::engine::Profiler,
+    generator: &mut crate::engine::world::levelgen::MinecraftWorldGenerator,
+    chunk_worker: &mut crate::engine::world::chunk_gen_async::ChunkGeneratorWorker,
     block_tx: &std::sync::mpsc::Sender<crate::network::Packet>,
 ) {
     match cmd {
@@ -85,6 +87,32 @@ pub fn handle_worker_command(
                 player.is_flying = !player.is_flying;
                 if player.is_flying { player.velocity.y = 0.0; }
             }
+        }
+        LogicCommand::ResetWorld { seed, game_mode } => {
+            world.storage.clear();
+            *generator = crate::engine::world::levelgen::MinecraftWorldGenerator::new(seed);
+            chunk_worker.update_generator(generator.clone());
+            let (sx, sy, sz) = generator.find_valid_spawn();
+            let scx = sx.div_euclid(16);
+            let scz = sz.div_euclid(16);
+            for cx in (scx - 2)..=(scx + 2) {
+                for cz in (scz - 2)..=(scz + 2) {
+                    for cy in -4..=8 {
+                        let chunk = generator.generate_chunk(cx, cy, cz);
+                        world.storage.insert((cx, cy, cz), chunk);
+                    }
+                }
+            }
+            world.rebuild_all_dirty_chunks();
+            player.position = Vec3::new(sx as f32 + 0.5, sy as f32, sz as f32 + 0.5);
+            player.velocity = Vec3::ZERO;
+            player.game_mode = game_mode;
+            player.is_flying = false;
+            items.clear();
+            block_entities.clear();
+            *open_container = None;
+            inventory.clear();
+            crate::engine::world::save_world_to_disk(world);
         }
         other => {
             super::worker_remote_cmds::handle_remote_command(&other, world, items);

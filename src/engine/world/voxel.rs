@@ -42,6 +42,22 @@ impl VoxelWorld {
         w
     }
 
+    pub fn new_minecraft_world(chunk_radius: i32, seed: i64) -> Self {
+        let mut w = Self::new();
+        let generator = super::levelgen::MinecraftWorldGenerator::new(seed);
+        for cx in -chunk_radius..=chunk_radius {
+            for cz in -chunk_radius..=chunk_radius {
+                // Generate chunk sections from bottom (Y = -64 / cy = -4) up to sky (Y = 128 / cy = 8)
+                for cy in -4..=8 {
+                    let chunk = generator.generate_chunk(cx, cy, cz);
+                    w.storage.insert((cx, cy, cz), chunk);
+                }
+            }
+        }
+        w.rebuild_all_dirty_chunks();
+        w
+    }
+
     #[inline]
     pub fn world_to_chunk(gx: i32, gy: i32, gz: i32) -> ((i32, i32, i32), (usize, usize, usize)) {
         let (cx, cy, cz) = (gx.div_euclid(16), gy.div_euclid(16), gz.div_euclid(16));

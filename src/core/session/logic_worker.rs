@@ -22,14 +22,31 @@ impl LogicWorker {
         thread::Builder::new()
             .name("logic-worker".into())
             .spawn(move || {
+                let default_seed = 12345i64;
+                let mut generator = crate::engine::world::levelgen::MinecraftWorldGenerator::new(default_seed);
                 let mut world = VoxelWorld::new();
-                if !load_world_from_disk(&mut world) {
-                    world = VoxelWorld::new_island();
+                let spawn_pos = if !load_world_from_disk(&mut world) {
+                    let sp = generator.find_valid_spawn();
+                    let scx = sp.0.div_euclid(16);
+                    let scz = sp.2.div_euclid(16);
+                    for cx in (scx - 2)..=(scx + 2) {
+                        for cz in (scz - 2)..=(scz + 2) {
+                            for cy in -4..=8 {
+                                let chunk = generator.generate_chunk(cx, cy, cz);
+                                world.storage.insert((cx, cy, cz), chunk);
+                            }
+                        }
+                    }
+                    world.rebuild_all_dirty_chunks();
                     save_world_to_disk(&world);
-                }
+                    sp
+                } else {
+                    generator.find_valid_spawn()
+                };
                 *world_storage.lock().unwrap() = Some(world.storage.clone());
                 let autosaver = WorldAutosaver::start(world.storage.clone());
-                let (mut player, mut camera, mut inventory, mut items, mut tick_system) = super::worker_init::init_logic_entities(&world);
+                let mut chunk_worker = crate::engine::world::chunk_gen_async::ChunkGeneratorWorker::new(world.storage.clone(), generator.clone());
+                let (mut player, mut camera, mut inventory, mut items, mut tick_system) = super::worker_init::init_logic_entities(&world, spawn_pos);
                 let mut block_entities = crate::engine::BlockEntityManager::new();
                 let mut open_container: Option<crate::engine::ContainerRef> = None;
 
@@ -54,7 +71,7 @@ impl LogicWorker {
                             cmd, &mut world, &mut player, &mut camera, &mut inventory, &mut items, &mut block_entities, &mut open_container, &mut move_input,
                             &mut jump_input, &mut sneak_input, &mut sprint_input, &mut aim_dir, &mut mouse_ndc, &mut aspect,
                             &mut current_hovered_block, &mut mining_state, &mut tick_system,
-                            &mut show_chunk_borders, &mut piechart_state, &profiler, &block_tx,
+                            &mut show_chunk_borders, &mut piechart_state, &profiler, &mut generator, &mut chunk_worker, &block_tx,
                         );
                     }
                     profiler.pop();
@@ -62,7 +79,7 @@ impl LogicWorker {
                     profiler.push("tick");
                     let ticks = tick_system.advance(dt);
                     for _ in 0..ticks {
-                        super::worker_tick::tick_world_and_player(&mut world, &mut player, &mut tick_system, &block_tx);
+                        super::worker_tick::tick_world_and_player(&mut world, &mut player, &mut tick_system, &mut chunk_worker, &block_tx);
                     }
                     profiler.pop();
 

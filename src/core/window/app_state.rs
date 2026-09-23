@@ -34,6 +34,10 @@ pub struct App {
     pub world_storage: Arc<Mutex<Option<Arc<ConcurrentChunkStorage>>>>,
     pub last_space_time: Option<Instant>,
     pub inventory_open: bool,
+    pub world_name_input: String,
+    pub world_seed_input: String,
+    pub create_world_gamemode: crate::engine::GameMode,
+    pub active_create_field: usize, // 0: Name, 1: Seed
 }
 
 impl App {
@@ -61,6 +65,10 @@ impl App {
             world_storage: Arc::new(Mutex::new(None)),
             last_space_time: None,
             inventory_open: false,
+            world_name_input: "New World".to_string(),
+            world_seed_input: "".to_string(),
+            create_world_gamemode: crate::engine::GameMode::Survival,
+            active_create_field: 0,
         }
     }
 }

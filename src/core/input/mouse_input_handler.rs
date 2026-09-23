@@ -30,7 +30,12 @@ pub fn handle_mouse_input(
                     1.0 - (app.mouse_pos.1 / r.config.height as f32) * 2.0,
                 );
                 let servers = app.lan_detector.as_ref().map(|d| d.get_servers()).unwrap_or_default();
-                if let Some(action) = handle_menu_click(app.game_state, mouse_ndc, aspect, &servers, &app.direct_ip_input) {
+                let gm_name = match app.create_world_gamemode {
+                    crate::engine::GameMode::Survival => "Survival",
+                    crate::engine::GameMode::Creative => "Creative",
+                    _ => "Survival",
+                };
+                if let Some(action) = handle_menu_click(app.game_state, mouse_ndc, aspect, &servers, &app.direct_ip_input, gm_name) {
                     super::menu_action_handler::apply_menu_action(app, action, event_loop);
                 }
             }

@@ -82,11 +82,15 @@ impl Renderer {
         state: crate::core::session::GameState,
         servers: &[crate::network::DiscoveredServer],
         ip_input: &str,
+        world_name: &str,
+        world_seed: &str,
+        game_mode: crate::engine::GameMode,
+        active_field: usize,
         mouse_ndc: (f32, f32),
     ) {
         let aspect = self.config.width as f32 / self.config.height as f32;
         crate::core::menu::update_menu_hud_mesh(
-            &mut self.hud_renderer, &self.device, state, servers, ip_input, mouse_ndc, aspect,
+            &mut self.hud_renderer, &self.device, state, servers, ip_input, world_name, world_seed, game_mode, active_field, mouse_ndc, aspect,
         );
     }
 

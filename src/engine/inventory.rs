@@ -93,4 +93,16 @@ impl Inventory {
             None
         }
     }
+
+    pub fn clear(&mut self) {
+        self.hotbar = [None, None, None, None, None, None, None, None, None];
+        self.storage = [None; 27];
+        self.armor = [None; 4];
+        self.offhand = None;
+        self.craft = [None; 4];
+        self.result = None;
+        self.carried_item = None;
+        self.is_open = false;
+        self.selected_slot = 0;
+    }
 }

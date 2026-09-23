@@ -4,6 +4,7 @@ use bevy::prelude::Resource;
 pub enum GameState {
     #[default]
     TitleScreen,
+    CreateWorld,
     LanLobby,
     DirectConnect,
     Playing,

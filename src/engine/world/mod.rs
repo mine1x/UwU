@@ -3,6 +3,7 @@ pub mod block_conv;
 pub mod block_props;
 pub mod chunk;
 pub mod chunk_codec;
+pub mod chunk_gen_async;
 pub mod chunk_mesh;
 pub mod chunk_mesh_par;
 pub mod custom_block_mesh;
@@ -29,8 +30,10 @@ pub mod water_flow_dir;
 pub mod water_slope;
 pub mod persistence;
 pub mod autosave;
+pub mod levelgen;
 
 pub use autosave::WorldAutosaver;
+pub use levelgen::{BiomeType, MinecraftWorldGenerator};
 pub use persistence::{
     get_world_save_dir, load_world_from_disk, save_dirty_chunks_to_disk, save_world_to_disk,
 };

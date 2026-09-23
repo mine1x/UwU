@@ -7,6 +7,42 @@ use crate::network::{LanClient, LanServer, LanServerDetector};
 
 pub fn apply_menu_action(app: &mut App, action: MenuAction, event_loop: &ActiveEventLoop) {
     match action {
+        MenuAction::OpenCreateWorld => {
+            app.game_state = GameState::CreateWorld;
+        }
+        MenuAction::ToggleCreateGameMode => {
+            app.create_world_gamemode = match app.create_world_gamemode {
+                crate::engine::GameMode::Survival => crate::engine::GameMode::Creative,
+                crate::engine::GameMode::Creative => crate::engine::GameMode::Survival,
+                _ => crate::engine::GameMode::Survival,
+            };
+        }
+        MenuAction::SelectInputField(idx) => {
+            app.active_create_field = idx;
+        }
+        MenuAction::CreateNewWorld => {
+            // Parse or hash seed
+            let seed: i64 = if app.world_seed_input.trim().is_empty() {
+                let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_millis();
+                (now as i64) ^ 0x5DEECE66D
+            } else if let Ok(s) = app.world_seed_input.trim().parse::<i64>() {
+                s
+            } else {
+                let mut h = 0i64;
+                for b in app.world_seed_input.as_bytes() {
+                    h = h.wrapping_mul(31).wrapping_add(*b as i64);
+                }
+                h
+            };
+
+            if let Some(tx) = &app.command_tx {
+                let _ = tx.send(crate::input::LogicCommand::ResetWorld {
+                    seed,
+                    game_mode: app.create_world_gamemode,
+                });
+            }
+            app.game_state = GameState::Playing;
+        }
         MenuAction::StartSingleplayer => {
             app.game_state = GameState::Playing;
         }

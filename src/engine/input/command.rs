@@ -35,4 +35,8 @@ pub enum LogicCommand {
     RemoteRemoveEntities { entity_ids: Vec<i32> },
     ToggleGameMode,
     ToggleFlight,
+    ResetWorld {
+        seed: i64,
+        game_mode: crate::engine::GameMode,
+    },
 }

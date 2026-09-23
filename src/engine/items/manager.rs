@@ -76,4 +76,9 @@ impl ItemEntityManager {
     pub fn build_mesh(&self, v: &mut Vec<Vertex>, idx: &mut Vec<u32>) {
         for item in &self.items { build_dropped_item_mesh(item, v, idx); }
     }
+
+    pub fn clear(&mut self) {
+        self.ecs_world.clear_entities();
+        self.items.clear();
+    }
 }

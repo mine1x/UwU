@@ -21,4 +21,10 @@ impl BlockEntityManager {
             furnace.update(dt);
         }
     }
+
+    pub fn clear(&mut self) {
+        self.chests.clear();
+        self.furnaces.clear();
+        self.crafting_tables.clear();
+    }
 }
